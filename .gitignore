@@ -1,0 +1,14 @@
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+
+# Results
+results/
+test_results/
