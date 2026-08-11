@@ -1,7 +1,7 @@
 # nf-seabed-symphony
 
 A [Nextflow](https://www.nextflow.io/) (DSL2) reimplementation of the
-**seabed-symphony** pipeline: marine metagenomics for the discovery of
+**seabed-symphony** pipeline: metagenomics for the discovery of
 biosynthetic gene clusters (BGCs) from Oxford Nanopore long reads.
 
 The original pipeline is a series of 17 sequential bash scripts. This repository
