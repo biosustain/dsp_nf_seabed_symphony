@@ -3,44 +3,38 @@ process PORECHOP_PORECHOP {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/porechop:0.2.4--py39h7cff6ad_2' :
-        'biocontainers/porechop:0.2.4--py39h7cff6ad_2' }"
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/2b/2bce1f10c51906a66c4c4d3a7485394f67e304177192ad1cce6cf586a3a18bae/data' :
+        'community.wave.seqera.io/library/porechop_pigz:d1655e5b5bad786c' }"
 
     input:
     tuple val(meta), path(reads)
 
     output:
     tuple val(meta), path("*.fastq.gz"), emit: reads
-    path  "versions.yml"               , emit: versions
+    tuple val(meta), path("*.log")     , emit: log
+    tuple val("${task.process}"), val('porechop'), eval("porechop --version"), topic: versions, emit: versions_porechop
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args   = task.ext.args   ?: ''
+    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     porechop \\
         -i ${reads} \\
-        -o ${prefix}.porechop.fastq.gz \\
-        -t $task.cpus \\
-        $args
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        porechop: \$(porechop --version 2>&1)
-    END_VERSIONS
+        -t ${task.cpus} \\
+        ${args} \\
+        -o ${prefix}.fastq.gz \\
+        > ${prefix}.log
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    echo "" | gzip > ${prefix}.porechop.fastq.gz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        porechop: \$(porechop --version 2>&1)
-    END_VERSIONS
+    touch ${prefix}.fastq
+    gzip ${prefix}.fastq
+    touch ${prefix}.log
     """
 }
