@@ -12,7 +12,7 @@ from [nf-core](https://nf-co.re/modules) modules.
 
 ## Status
 
-| Module | Scope | Original steps | Status |
+| Workflow | Scope | Original steps | Status |
 |---|---|---|---|
 | 1 | Preprocessing & Quality Control | 1–4 | ✅ **implemented** |
 | 2 | Metagenome Assembly & Annotation | 5–8 | ⬜ planned |
@@ -69,7 +69,7 @@ nextflow run main.nf -profile singularity --input 'data/*.fastq.gz'
 
 ---
 
-## Module 1 — Preprocessing & Quality Control
+## Workflow 1 — Preprocessing & Quality Control
 
 ```
 raw FASTQ
@@ -82,7 +82,7 @@ raw FASTQ
                      └── SeqKit stats (4b)  post-trim statistics
                            │
                            ▼
-                        clean reads → Module 2
+                        clean reads → Workflow 2
 ```
 
 ### Tools
@@ -137,30 +137,32 @@ so it has no community structure to bin and few BGCs to find.
 
 ## Containerisation
 
-Two layers coexist:
+**One function, one tool, one image.**
 
-**1. Per-tool containers (active by default).** Every nf-core module pins its own
-BioContainers/Seqera image. `-profile docker` or `-profile singularity` pulls
-them automatically — nothing needs building.
+By default the pipeline uses the single-tool image each nf-core module already
+declares. These are built from the same bioconda recipes as the conda
+environments, so `-profile docker` or `-profile singularity` pulls them
+automatically and nothing needs building:
 
-**2. Grouped images (in progress).** One image per module, so the pipeline can be
-distributed as four self-contained units:
+| Process | Tool | Image source |
+|---|---|---|
+| `NANOPLOT` | NanoPlot 1.47.0 | BioContainers |
+| `SEQKIT_STATS` | SeqKit 2.13.0 | Seqera Containers |
+| `FILTLONG` | Filtlong 0.2.1 | BioContainers |
+| `PORECHOP_PORECHOP` | Porechop 0.2.4 | Seqera Containers |
 
-| Image | Module | Tools | Status |
-|---|---|---|---|
-| `seabed-qc` | 1 | NanoPlot, SeqKit, Filtlong, Porechop | [Dockerfile](docker/seabed-qc/Dockerfile) written |
-| `seabed-assembly` | 2 | Flye, Whokaryote, BBMap, SAMtools | planned |
-| `seabed-binning` | 3 | MetaBAT2, MaxBin2, CONCOCT, DAS Tool, CheckM | planned |
-| `seabed-bgc` | 4 | GTDB-Tk, Bakta, antiSMASH, BiG-SCAPE | planned |
+[`docker/`](docker/) holds an equivalent one-tool-per-image Dockerfile for each,
+pinned to the same versions. Build these only when you need something upstream
+cannot provide — an institutional or air-gapped registry, a tool with no upstream
+container (likely Whokaryote and GraphMB later), or an image carrying this
+pipeline's own `bin/` scripts:
 
 ```bash
-docker build -t seabed-qc:1.0.0 docker/seabed-qc/
+docker build -t seabed-nanoplot:1.47.0 docker/nanoplot/
 ```
 
-Note that `seabed-qc` is **not yet wired into the pipeline** — the modules still
-use their individual per-tool images. Grouped images become worthwhile mainly for
-Module 4, where antiSMASH, Bakta and GTDB-Tk have heavy, conflict-prone
-dependency trees.
+See [`docker/README.md`](docker/README.md) for all four builds and for how to
+point processes at them without editing the nf-core modules.
 
 ---
 
@@ -174,14 +176,17 @@ dependency trees.
 │   ├── base.config              CPU/memory/time per process label
 │   └── modules.config           tool arguments + publishing rules
 ├── workflows/
-│   └── preprocessing_qc.nf      Module 1 subworkflow
+│   └── preprocessing_qc.nf      Workflow 1
 ├── modules/nf-core/             unmodified nf-core modules
 │   ├── filtlong/
 │   ├── nanoplot/
 │   ├── porechop/porechop/
 │   └── seqkit/stats/
-└── docker/
-    └── seabed-qc/Dockerfile
+└── docker/                      one-tool-per-image Dockerfiles
+    ├── filtlong/
+    ├── nanoplot/
+    ├── porechop/
+    └── seqkit/
 ```
 
 Modules are **unmodified** nf-core code. To update them later, install the
@@ -199,8 +204,8 @@ nf-core modules update --all
 - [ ] Samplesheet input (CSV with sample ID, barcode, site, depth) — needed for
       multiplexed runs; the current glob input cannot carry per-sample metadata
 - [ ] MultiQC report aggregating NanoPlot and SeqKit across samples
-- [ ] Module 2: metaFlye assembly, Whokaryote, prokaryotic contig extraction
-- [ ] Module 3: multi-binner ensemble + DAS Tool + CheckM
-- [ ] Module 4: GTDB-Tk, Bakta, antiSMASH, BiG-SCAPE
+- [ ] Workflow 2: metaFlye assembly, Whokaryote, prokaryotic contig extraction
+- [ ] Workflow 3: multi-binner ensemble + DAS Tool + CheckM
+- [ ] Workflow 4: GTDB-Tk, Bakta, antiSMASH, BiG-SCAPE
 - [ ] nf-test unit tests per module
 - [ ] Institutional/HPC profile for cluster execution
