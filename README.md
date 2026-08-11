@@ -82,7 +82,7 @@ raw FASTQ
                      └── SeqKit stats (4b)  post-trim statistics
                            │
                            ▼
-                  clean reads → Module 2
+                        clean reads → Module 2
 ```
 
 ### Tools
@@ -96,16 +96,6 @@ raw FASTQ
 
 Tool arguments live in [`conf/modules.config`](conf/modules.config) — edit them
 there rather than in the module files, so the nf-core modules stay updatable.
-
-### ⚠️ A note on step ordering
-
-The original bash pipeline filters reads (Filtlong) **before** removing adapters
-(Porechop), and this implementation reproduces that order faithfully. Be aware
-that the more common convention is the reverse: adapters inflate read length and
-depress quality scores, so trimming them first can change which reads survive
-the `--min_length` and `--keep_percent` cutoffs. If you decide to switch, the
-change is a two-line edit in
-[`workflows/preprocessing_qc.nf`](workflows/preprocessing_qc.nf).
 
 ---
 
@@ -140,36 +130,8 @@ results/
 Nothing large is committed to this repository.
 
 It is a *technical* test: it exercises every process, produces realistic
-long-read length distributions, and completes in minutes. It is **not** a
-marine metagenome — it is a single bacterial isolate, so it has no community
-structure to bin and few BGCs to find. Expect Modules 3 and 4 to need a
-different dataset once they exist (a mock community such as ZymoBIOMICS, or
-real seabed sediment reads).
-
-### Historical note
-
-Earlier versions of this repository used `all.fastq.gz` / `subsample.fastq.gz`
-derived from [Zenodo record 7995806](https://zenodo.org/records/7995806) —
-a methylation-free *E. coli* K-12 MG1655 ONT dataset (19.8 GB). Those files were
-truncated (incomplete gzip streams, most likely an interrupted download or
-subsampling step) and have been removed. To regenerate a valid subsample:
-
-```bash
-# stream the first 25 MB, then keep only complete FASTQ records
-curl -sL -r 0-25000000 \
-  "https://zenodo.org/records/7995806/files/guppy_basecalled.fastq.gz?download=1" \
-  | gunzip -c 2>/dev/null \
-  | awk 'NR%4==1{h=$0} NR%4==2{s=$0} NR%4==3{p=$0} NR%4==0{q=$0;
-         if(length(s)==length(q) && length(s)>0) print h"\n"s"\n"p"\n"q}' \
-  | gzip -c > data/ecoli_subsample.fastq.gz
-
-gzip -t data/ecoli_subsample.fastq.gz && echo "valid"
-```
-
-`data/test.fastq.gz`, if still present, is a SARS-CoV-2 ARTIC **amplicon**
-dataset (100 reads, ~382 bp mean). It is safe to delete — amplicon reads of that
-length are removed almost entirely by the `--min_length 1000` filter, so it only
-ever verified that the plumbing worked.
+long-read length distributions, and completes in minutes. It is a single bacterial isolate, 
+so it has no community structure to bin and few BGCs to find. 
 
 ---
 
