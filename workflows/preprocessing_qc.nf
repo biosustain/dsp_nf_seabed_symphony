@@ -1,5 +1,5 @@
 //
-// Module 1: Preprocessing & Quality Control
+// Workflow 1: Preprocessing & Quality Control
 //
 // Faithful translation of seabed-symphony steps 1-4:
 //   1a. NanoPlot (raw)          — read length / quality visualisation
@@ -55,7 +55,7 @@ workflow PREPROCESSING_QC {
     SEQKIT_STATS_TRIMMED ( PORECHOP_PORECHOP.out.reads )
 
     emit:
-    reads         = PORECHOP_PORECHOP.out.reads    // clean reads → Module 2 (assembly)
+    reads         = PORECHOP_PORECHOP.out.reads    // clean reads → Workflow 2 (assembly)
     nanoplot_raw  = NANOPLOT.out.txt               // NanoStats.txt, raw
     nanoplot_trim = NANOPLOT_TRIMMED.out.txt       // NanoStats.txt, trimmed
     stats_raw     = SEQKIT_STATS.out.stats         // SeqKit .tsv, raw
