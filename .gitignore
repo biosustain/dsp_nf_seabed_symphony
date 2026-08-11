@@ -3,12 +3,20 @@
 .nextflow.log*
 work/
 
-# IDE
-.vscode/
-
-# OS
-.DS_Store
-
 # Results
 results/
 test_results/
+
+# Sequencing data — keep large FASTQ out of git.
+# `-profile test` streams its dataset from nf-core/test-datasets instead.
+data/*.fastq
+data/*.fastq.gz
+data/*.fq
+data/*.fq.gz
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
