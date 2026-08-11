@@ -1,34 +1,34 @@
 {
     "name": "nf-seabed-symphony",
-    "homePage": "",
+    "homePage": "https://github.com/biosustain/dsp_nf_seabed_symphony",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
-                    "nanoplot": {
+                    "filtlong": {
                         "branch": "master",
-                        "git_sha": "e753770db613ce014b3c4bc94f6cba443427b726",
+                        "git_sha": "83819fff250f4fe6747fd8855fb3039eea22e5b7",
                         "installed_by": [
                             "modules"
                         ]
                     },
-                    "filtlong": {
+                    "nanoplot": {
                         "branch": "master",
-                        "git_sha": "cf17ca47f45f6e9f1c8ae41d9c0616a3c4cb6ac9",
+                        "git_sha": "cc4d441624bd2a0db697502bdde9005a5a5f0b36",
                         "installed_by": [
                             "modules"
                         ]
                     },
                     "porechop/porechop": {
                         "branch": "master",
-                        "git_sha": "f4ae1d942bd50c5c0b9bd2de1393ce38315acfe9",
+                        "git_sha": "4aceeffaed1eaa12c0e198b166f898e91e4e781d",
                         "installed_by": [
                             "modules"
                         ]
                     },
                     "seqkit/stats": {
                         "branch": "master",
-                        "git_sha": "4ab13872435962dadf2a3c56a6df60e3f5751e04",
+                        "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",
                         "installed_by": [
                             "modules"
                         ]
