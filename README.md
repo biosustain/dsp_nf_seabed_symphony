@@ -200,9 +200,20 @@ automatically and nothing needs building:
 | `SEQKIT_STATS` | SeqKit 2.13.0 | Seqera Containers |
 | `FILTLONG` | Filtlong 0.2.1 | BioContainers |
 | `PORECHOP_PORECHOP` | Porechop 0.2.4 | Seqera Containers |
+| `FLYE` | Flye 2.9.5 | Seqera Containers |
+| `BANDAGE_IMAGE` | Bandage 0.9.0 | Seqera Containers |
+| `WHOKARYOTE` | Whokaryote 1.1.2 | BioContainers (local module) |
+| `EXTRACT_*` | Biopython 1.84 | BioContainers (local module) |
 
-[`docker/`](docker/) holds an equivalent one-tool-per-image Dockerfile for each,
-pinned to the same versions. Build these only when you need something upstream
+[`docker/`](docker/) holds an equivalent one-tool-per-image Dockerfile for all
+eight, pinned to the same versions, plus a `local_containers` profile that points
+the pipeline at them:
+
+```bash
+nextflow run main.nf -profile local_containers,test
+```
+
+Build these only when you need something upstream
 cannot provide — an institutional or air-gapped registry, a tool with no upstream
 container (likely Whokaryote and GraphMB later), or an image carrying this
 pipeline's own `bin/` scripts:

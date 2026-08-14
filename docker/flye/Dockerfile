@@ -1,19 +1,19 @@
 # =============================================================================
-# NanoPlot — Nanopore read length / quality visualisation
+# Flye — long-read (meta)genome assembler
 #
 # One tool, one image. Pinned to match
-#   modules/nf-core/nanoplot/environment.yml
+#   modules/nf-core/flye/environment.yml
 #
 # Build:
-#   docker build -t seabed-nanoplot:1.47.0 docker/nanoplot/
+#   docker build -t seabed-flye:2.9.5 docker/flye/
 # =============================================================================
 
 FROM mambaorg/micromamba:1.5.8
 
-ARG TOOL_VERSION=1.47.0
+ARG TOOL_VERSION=2.9.5
 
-LABEL org.opencontainers.image.title="seabed-nanoplot"
-LABEL org.opencontainers.image.description="NanoPlot — plotting suite for Oxford Nanopore sequencing data"
+LABEL org.opencontainers.image.title="seabed-flye"
+LABEL org.opencontainers.image.description="Flye — de novo assembler for long reads, with metaFlye mode"
 LABEL org.opencontainers.image.version="${TOOL_VERSION}"
 LABEL org.opencontainers.image.source="https://github.com/biosustain/dsp_nf_seabed_symphony"
 
@@ -25,7 +25,7 @@ RUN apt-get update \
 USER $MAMBA_USER
 
 RUN micromamba install -y -n base -c conda-forge -c bioconda \
-        nanoplot=${TOOL_VERSION} \
+        flye=${TOOL_VERSION} \
     && micromamba clean --all --yes
 
 # Put the env on PATH directly so the tool resolves even when the container is
@@ -35,6 +35,6 @@ ENV PATH="/opt/conda/bin:${PATH}"
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 # Fail the build rather than ship a broken image
-RUN NanoPlot --version
+RUN flye --version
 
 WORKDIR /data

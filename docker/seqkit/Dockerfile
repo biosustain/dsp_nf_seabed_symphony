@@ -28,7 +28,10 @@ RUN micromamba install -y -n base -c conda-forge -c bioconda \
         seqkit=${TOOL_VERSION} \
     && micromamba clean --all --yes
 
-# Activate the base env for subsequent RUN steps and at container runtime
+# Put the env on PATH directly so the tool resolves even when the container is
+# run with its entrypoint overridden (which some Nextflow configurations do).
+ENV PATH="/opt/conda/bin:${PATH}"
+
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 # Fail the build rather than ship a broken image
