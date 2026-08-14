@@ -15,7 +15,7 @@ from [nf-core](https://nf-co.re/modules) modules.
 | Workflow | Scope | Original steps | Status |
 |---|---|---|---|
 | 1 | Preprocessing & Quality Control | 1–4 | ✅ **implemented** |
-| 2 | Metagenome Assembly & Annotation | 5–8 | ⬜ planned |
+| 2 | Metagenome Assembly & Annotation | 5–8 | ✅ **implemented** |
 | 3 | Genome Binning & Quality Assessment | 9–11 | ⬜ planned |
 | 4 | BGC Detection & Functional Analysis | 12–15 | ⬜ planned |
 
@@ -66,6 +66,10 @@ nextflow run main.nf -profile singularity --input 'data/*.fastq.gz'
 | `--max_cpus` | `16` | Ceiling on CPUs per task |
 | `--max_memory` | `128.GB` | Ceiling on memory per task |
 | `--max_time` | `240.h` | Ceiling on runtime per task |
+| `--flye_read_type` | `nano-hq` | Flye read type, **without** leading dashes. `nano-hq` needs <5 % error (R10.4/Q20+); use `nano-raw` for older R9 data |
+| `--flye_iterations` | `3` | Flye polishing rounds |
+| `--skip_assembly` | `false` | Stop after Workflow 1 |
+| `--skip_bandage` | `false` | Skip graph rendering (needed for `-profile conda` on macOS — see caveats) |
 
 ---
 
@@ -99,6 +103,62 @@ there rather than in the module files, so the nf-core modules stay updatable.
 
 ---
 
+## Workflow 2 — Metagenome Assembly & Annotation
+
+```
+clean reads (from Workflow 1)
+   └── metaFlye                (5)  --meta assembly
+         ├── assembly_graph.gfa ──── Bandage         (6)  PNG + SVG of the graph
+         └── assembly.fasta ──────── Whokaryote      (7)  prokaryote vs eukaryote
+                                          │
+                    ┌─────────────────────┴─────────────────────┐
+                    │ prokaryote_contig_headers.txt             │ eukaryote_..._headers.txt
+                    ▼                                           ▼
+          extractContigsFromWhokaryote.py  (8)      extractContigsFromWhokaryote.py
+                    │  (--p)                                    │  (--e)
+                    ▼                                           ▼
+        prokaryote contigs → Workflow 3              eukaryote contigs (by-product)
+```
+
+Flye emits two *different* files, so the fork after assembly is not one output
+going two ways: **Bandage takes the assembly graph (GFA), Whokaryote takes the
+contigs (FASTA)**. Step 8 runs twice, mirroring the original — once with `--p`
+and once with `--e`.
+
+### Tools
+
+| Step | Tool | Version | Purpose |
+|---|---|---|---|
+| 5 | Flye (metaFlye) | 2.9.5 | Metagenome assembly of long reads |
+| 6 | Bandage | 0.9.0 | Assembly-graph visualisation |
+| 7 | Whokaryote | 1.1.2 | Prokaryote/eukaryote contig classification |
+| 8 | `extractContigsFromWhokaryote.py` | 1.0 | Split assembly by domain |
+
+Whokaryote and the extraction script have no nf-core modules, so they live in
+[`modules/local/`](modules/local). The Python script is vendored from the
+original repository into [`bin/`](bin), which Nextflow puts on `PATH`
+automatically.
+
+### ⚠️ Caveats
+
+- **Bandage was never scripted in the original.** `workflow/6_bandage/` contains
+  only hand-exported `graph.png` files, produced through the Bandage GUI.
+  Automating it here is an addition, not a translation.
+- **Whokaryote ignores contigs below `--minsize` (default 5000 bp).** A
+  fragmented assembly can leave most contigs unclassified, and therefore absent
+  from the prokaryotic FASTA handed to Workflow 3. Lower it in
+  `conf/modules.config` if needed.
+- **`nano-hq` vs `nano-raw` matters a lot.** Flye rejects reads whose error rate
+  exceeds the mode's expectation, and reports `Generated 0 contigs` rather than a
+  clear message. If assembly yields nothing, check the reported alignment error
+  rate in `assembly/<sample>/<sample>.flye.log` first.
+- **Bandage under `-profile conda` on macOS fails.** The nf-core module uses GNU
+  `zcat`; the BSD `zcat` on macOS refuses `.gz` files. Use `--skip_bandage`
+  locally, or run under `-profile docker` / on Linux. `conf/modules.config` also
+  exports `QT_QPA_PLATFORM=offscreen`, which headless HPC nodes need.
+
+---
+
 ## Output
 
 ```
@@ -112,6 +172,19 @@ results/
 │   └── seqkit/
 │       ├── <sample>.raw.tsv
 │       └── <sample>.trimmed.tsv
+├── assembly/<sample>/
+│   ├── <sample>.assembly.fasta.gz         ← contigs
+│   ├── <sample>.assembly_graph.gfa.gz     ← graph (Bandage input)
+│   ├── <sample>.assembly_info.txt         ← per-contig length / coverage
+│   ├── <sample>.flye.log
+│   └── graph/                             ← Bandage PNG + SVG
+├── taxonomy/whokaryote/<sample>/
+│   ├── prokaryote_contig_headers.txt
+│   ├── eukaryote_contig_headers.txt
+│   └── featuretable_predictions_T.tsv
+├── contigs/
+│   ├── prokaryote/<sample>.prokaryote.fasta.gz  ← hand-off to Workflow 3
+│   └── eukaryote/<sample>.eukaryote.fasta.gz
 └── pipeline_info/
     ├── software_versions.yml               ← every tool version used
     ├── execution_report.html
@@ -175,13 +248,21 @@ point processes at them without editing the nf-core modules.
 ├── conf/
 │   ├── base.config              CPU/memory/time per process label
 │   └── modules.config           tool arguments + publishing rules
+├── bin/                         helper scripts (auto-added to PATH)
+│   └── extractContigsFromWhokaryote.py
 ├── workflows/
-│   └── preprocessing_qc.nf      Workflow 1
+│   ├── preprocessing_qc.nf      Workflow 1
+│   └── assembly_annotation.nf   Workflow 2
 ├── modules/nf-core/             unmodified nf-core modules
+│   ├── bandage/image/
 │   ├── filtlong/
+│   ├── flye/
 │   ├── nanoplot/
 │   ├── porechop/porechop/
 │   └── seqkit/stats/
+├── modules/local/               tools with no nf-core module
+│   ├── whokaryote/
+│   └── extractcontigsfromwhokaryote/
 └── docker/                      one-tool-per-image Dockerfiles
     ├── filtlong/
     ├── nanoplot/
@@ -204,7 +285,6 @@ nf-core modules update --all
 - [ ] Samplesheet input (CSV with sample ID, barcode, site, depth) — needed for
       multiplexed runs; the current glob input cannot carry per-sample metadata
 - [ ] MultiQC report aggregating NanoPlot and SeqKit across samples
-- [ ] Workflow 2: metaFlye assembly, Whokaryote, prokaryotic contig extraction
 - [ ] Workflow 3: multi-binner ensemble + DAS Tool + CheckM
 - [ ] Workflow 4: GTDB-Tk, Bakta, antiSMASH, BiG-SCAPE
 - [ ] nf-test unit tests per module

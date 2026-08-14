@@ -13,6 +13,10 @@ Each image installs exactly one analysis tool, pinned to the same version as the
 corresponding `modules/nf-core/<tool>/environment.yml`. If you bump a module,
 bump its Dockerfile to match.
 
+**Scope:** only Workflow 1's tools have Dockerfiles here. Workflow 2 (Flye,
+Bandage, Whokaryote, Biopython) runs entirely on the upstream single-tool images
+its modules declare, which is the recommended path — see below.
+
 ## Do you actually need these?
 
 **Usually not.** Every nf-core module already declares its own single-tool

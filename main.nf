@@ -6,14 +6,15 @@
 //
 // Currently implemented:
 //   Workflow 1 — Preprocessing & Quality Control
+//   Workflow 2 — Metagenome Assembly & Annotation
 //
 // Planned:
-//   Workflow 2 — Metagenome Assembly & Annotation
 //   Workflow 3 — Genome Binning & Quality Assessment
 //   Workflow 4 — BGC Detection & Functional Analysis
 //
 
-include { PREPROCESSING_QC } from './workflows/preprocessing_qc'
+include { PREPROCESSING_QC    } from './workflows/preprocessing_qc'
+include { ASSEMBLY_ANNOTATION } from './workflows/assembly_annotation'
 
 workflow {
 
@@ -39,9 +40,15 @@ workflow {
     // ── Workflow 1 ───────────────────────────────────────────────────────────
     PREPROCESSING_QC ( ch_reads )
 
+    // ── Workflow 2 ───────────────────────────────────────────────────────────
+    // Assembly is expensive; --skip_assembly stops after QC.
+    if ( !params.skip_assembly ) {
+        ASSEMBLY_ANNOTATION ( PREPROCESSING_QC.out.reads )
+    }
+
     // ── Software versions ────────────────────────────────────────────────────
-    // Every nf-core module publishes to the `versions` topic. Collect the
-    // whole set once here and write a single reproducibility record.
+    // Every module publishes to the `versions` topic. Collect the whole set
+    // once here and write a single reproducibility record.
     Channel.topic( 'versions' )
         .map { process, name, version -> "${name}: ${version}" }
         .unique()

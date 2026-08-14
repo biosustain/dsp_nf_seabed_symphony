@@ -1,0 +1,11 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::whokaryote=1.1.2
+  # Whokaryote shells out to both of these. Note the channels: tiara is on
+  # conda-forge (build hash pyhd8ed1ab), NOT bioconda, which has no such package.
+  - conda-forge::tiara=1.0.3
+  - bioconda::prodigal=2.6.3
