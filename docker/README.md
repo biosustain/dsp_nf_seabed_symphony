@@ -97,17 +97,3 @@ BSD `zcat` refuses the `.gz` graph that the nf-core module decompresses.
 if the container is launched with its entrypoint overridden, which some Nextflow
 configurations do. Relying on micromamba's entrypoint activation alone is
 fragile.
-
-## Memory when assembling in containers
-
-On Docker Desktop, Flye is limited by the **VM's** RAM, not the host's. Assembly
-of the 1 000-read test set was `SIGKILL`ed on an 8 GB VM but completed natively
-via conda on the same 16 GB machine:
-
-```
-ERROR: Looks like the system ran out of memory
-flye-modules assemble ... died with <Signals.SIGKILL: 9>
-```
-
-Raise the allocation in Docker Desktop → Settings → Resources before running
-assembly in containers. On Linux/HPC there is no VM and this does not apply.
