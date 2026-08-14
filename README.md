@@ -120,11 +120,6 @@ clean reads (from Workflow 1)
         prokaryote contigs → Workflow 3              eukaryote contigs (by-product)
 ```
 
-Flye emits two *different* files, so the fork after assembly is not one output
-going two ways: **Bandage takes the assembly graph (GFA), Whokaryote takes the
-contigs (FASTA)**. Step 8 runs twice, mirroring the original — once with `--p`
-and once with `--e`.
-
 ### Tools
 
 | Step | Tool | Version | Purpose |
@@ -138,24 +133,6 @@ Whokaryote and the extraction script have no nf-core modules, so they live in
 [`modules/local/`](modules/local). The Python script is vendored from the
 original repository into [`bin/`](bin), which Nextflow puts on `PATH`
 automatically.
-
-### ⚠️ Caveats
-
-- **Bandage was never scripted in the original.** `workflow/6_bandage/` contains
-  only hand-exported `graph.png` files, produced through the Bandage GUI.
-  Automating it here is an addition, not a translation.
-- **Whokaryote ignores contigs below `--minsize` (default 5000 bp).** A
-  fragmented assembly can leave most contigs unclassified, and therefore absent
-  from the prokaryotic FASTA handed to Workflow 3. Lower it in
-  `conf/modules.config` if needed.
-- **`nano-hq` vs `nano-raw` matters a lot.** Flye rejects reads whose error rate
-  exceeds the mode's expectation, and reports `Generated 0 contigs` rather than a
-  clear message. If assembly yields nothing, check the reported alignment error
-  rate in `assembly/<sample>/<sample>.flye.log` first.
-- **Bandage under `-profile conda` on macOS fails.** The nf-core module uses GNU
-  `zcat`; the BSD `zcat` on macOS refuses `.gz` files. Use `--skip_bandage`
-  locally, or run under `-profile docker` / on Linux. `conf/modules.config` also
-  exports `QT_QPA_PLATFORM=offscreen`, which headless HPC nodes need.
 
 ---
 
