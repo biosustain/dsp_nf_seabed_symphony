@@ -83,17 +83,3 @@ nextflow run main.nf -profile local_containers,test
 ```
 
 See the `local_containers` block in [`../nextflow.config`](../nextflow.config).
-
-## Notes on two of the images
-
-**bandage** sets `ENV QT_QPA_PLATFORM=offscreen`. Bandage is a Qt GUI
-application and will not render on a machine with no display — which includes
-every HPC node and CI runner. The image also carries the Qt runtime libraries
-(`libgl1`, `libglib2.0-0`, `libfontconfig1`, `libdbus-1-3`, `libxkbcommon0`).
-Running Bandage in this container additionally sidesteps the macOS problem where
-BSD `zcat` refuses the `.gz` graph that the nf-core module decompresses.
-
-**All images** set `ENV PATH="/opt/conda/bin:$PATH"` so the tools resolve even
-if the container is launched with its entrypoint overridden, which some Nextflow
-configurations do. Relying on micromamba's entrypoint activation alone is
-fragile.
