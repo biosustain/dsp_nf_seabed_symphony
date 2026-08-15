@@ -24,29 +24,6 @@ Each image installs exactly one analysis tool, pinned to the same version as the
 corresponding module's `environment.yml`. If you bump a module, bump its
 Dockerfile to match.
 
-Two images carry extra executables. These are runtime dependencies of the one
-function, not second analysis tools:
-
-- **porechop** also has `pigz` — Porechop shells out to it for parallel gzip.
-- **whokaryote** also has `tiara` and `prodigal` — Whokaryote orchestrates both
-  rather than reimplementing them. Note the channels: **`tiara` is on
-  conda-forge, not bioconda**, which has no such package.
-
-## Do you actually need these?
-
-**Usually not.** Every nf-core module already declares its own single-tool
-BioContainers/Seqera image, and `-profile docker` or `-profile singularity`
-pulls those automatically. Those upstream images are built from the same bioconda
-recipes, so they are the canonical "one tool, one image" artefacts and need no
-maintenance from us.
-
-Build the images here when you need something upstream cannot give you:
-
-- an **institutional or air-gapped registry** you control
-- a tool with **no upstream BioContainer** — `whokaryote` is exactly this case
-- a container carrying the pipeline's own **`bin/` scripts** — `biopython` is
-  this case: the code being run is ours, so the image has to be ours
-
 ## Build
 
 ```bash
